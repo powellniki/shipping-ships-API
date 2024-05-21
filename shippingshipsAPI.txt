@@ -1,0 +1,42 @@
+title Shipping Ships API
+
+participant Client
+participant Python
+participant json-server.py
+participant ship_view.py
+participant Database
+participant nss_handler.py
+
+
+Client->>Python:GET request to "/ships"
+Python->>json-server.py:Run do_GET() method
+json-server.py->>nss_handler.py:Takes the URL and parses \nit to dictionary format with \nall requested information.
+nss_handler.py-->json-server.py:Returns parsed URL
+json-server.py->>json-server.py:Checks to see if the requested \nresource is a ship, if yes then \nchecks to see if the primary key \nvalue is greater than 0, IF YES \nthen retrieve_ship() runs. \nIF pk = 0 (no ship selected) \nthen list_ships() runs.
+json-server.py->>ship_view.py:Run retrieve_ship()
+ship_view.py->>Database:Open a connection to shipping database & write \nSQL query to get requested ship data the user wants. \nSerialize Python list to JSON encoded string.
+Database-->ship_view.py:Serialized Python list with specific ship information as string.
+ship_view.py-->json-server.py:specific ship information response in a JSON formatted string\n
+json-server.py->>nss_handler.py:Checks ship response using response method
+Client<--nss_handler.py:Returns status response for requested data using HTTP codes
+json-server.py->>ship_view.py:Run list_ships()
+ship_view.py->>Database:Open connection to database, write SQL \nquery to get ship information and iterate \nto add that information to an empty list. \nSerialize Python list to JSON encoded string.
+Database-->ship_view.py:Serialized Python list with all ship information as string.
+ship_view.py-->json-server.py:all ship information response in a JSON formatted string
+json-server.py->>nss_handler.py:Checks ship response using response method
+Client<--nss_handler:Returns status response for requested data using HTTP codes
+json-server.py-->>Client: Here's all yer ships (in JSON format)
+
+
+
+Client->>Python:PUT request to "/ships"
+Python->>json-server.py:Run do_PUT() method
+json-server.py->nss_handler.py:Parse the URL and get the primary key
+note over json-server.py:Get the request body JSON for the new data. 
+json-server.py->>ship_view.py:If the requested data is a ship, and its primary key is not 0, run update_ship()
+ship_view.py->>Database:Open a connection to shipping database. Execute changes as specified in UPDATE statement.
+Database-->ship_view.py:Return boolean value True if updated, False if not updated.
+ship_view.py-->json-server.py:Return boolean value
+json-server.py->>nss_handler.py:Check if boolean true, if true then run response method
+nss_handler.py-->Client:Return status response for requested data using HTTP codes
+json-server.py-->>Client: Here's yer updated ship (in JSON format)
